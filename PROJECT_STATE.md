@@ -17,7 +17,7 @@ A browser-based collaborative code editor/mini-IDE allowing multiple users to ed
 Build a technically substantial CS portfolio project suitable for software engineering internship/placement applications.
 
 **Current status:**  
-Planning — implementation has not started.
+Phase 1 implementation in progress — the basic single-user editor foundation is working.
 
 ---
 
@@ -25,22 +25,28 @@ Planning — implementation has not started.
 
 **Phase:** 1 — Basic Editor
 
-**Status:** Not started.
+**Status:** In progress.
 
 ### Current milestone
 
-Create the initial repository and build a basic browser-based code editor using Monaco.
+Build the single-user multi-file editor foundation.
 
 ### Definition of done
 
-- Repository created
-- Frontend application running locally
-- TypeScript configured
-- Monaco Editor integrated
-- User can type/edit code
-- Basic language selection works
-- Basic editor layout is functional
-- README contains setup instructions
+- [x] Frontend application running locally
+- [x] TypeScript configured
+- [x] Monaco Editor integrated
+- [x] User can type/edit code
+- [x] Basic language selection works
+- [x] Basic editor layout is functional
+- [x] Initial file model created
+- [x] Selected file state created
+- [x] Editor displays selected file content
+- [x] Editor changes update the selected file's content
+- [ ] File Explorer
+- [ ] Create new file
+- [ ] Switch between multiple files and preserve content
+- [ ] README contains setup instructions
 
 ---
 
@@ -95,16 +101,47 @@ Backend API + WebSocket Server
 Current implementation:
 
 ```text
-Not implemented yet.
+Browser
+  |
+  v
+Next.js / React frontend
+  |
+  +--> Navbar / Menubar
+  |
+  +--> CodeEditor (Monaco)
+  |
+  +--> page.tsx
+       |
+       +--> files
+       +--> selectedFileId
+       |
+       +--> selected file language/content -> CodeEditor
+       +--> editor changes -> update files state
 ```
 
 ---
 
 ## Implemented Features
 
-### None
+### Phase 1 — Basic Editor
 
-The project has not been implemented yet.
+- [x] Next.js / React frontend
+- [x] TypeScript
+- [x] Basic application layout
+- [x] Navbar
+- [x] Menubar
+- [x] Monaco Editor integration
+- [x] Controlled Monaco editor value
+- [x] Initial Python language
+- [x] Language selector
+- [x] Shared language state lifted to `page.tsx`
+- [x] Shared `Language` type
+- [x] `EditorFile` type
+- [x] `files` state in `page.tsx`
+- [x] `selectedFileId` state in `page.tsx`
+- [x] Selected file resolved from the file collection
+- [x] Selected file content passed to Monaco
+- [x] Editor changes update the selected file immutably via `setFiles`
 
 ---
 
@@ -112,7 +149,7 @@ The project has not been implemented yet.
 
 ### MVP
 
-- [ ] Monaco code editor
+- [x] Monaco code editor
 - [ ] File creation/editing
 - [ ] File persistence
 - [ ] User authentication
@@ -141,7 +178,26 @@ The project has not been implemented yet.
 
 ## Current Repository Structure
 
-Not created yet.
+Current known frontend structure:
+
+```text
+app/
+├── page.tsx
+├── types/
+│   └── editor.ts
+└── Components/
+    ├── CodeEditor/
+    │   └── codeEditor.tsx
+    ├── Navbar/
+    │   └── navbar.tsx
+    ├── Menubar/
+    │   └── menubar.tsx
+    └── FileExplorer/
+        ├── fileExplorer.tsx
+        └── fileItem.tsx
+```
+
+The FileExplorer components are planned/current component locations; File Explorer functionality is not yet implemented.
 
 Target structure:
 
@@ -360,43 +416,63 @@ Do not present these as settled decisions.
 - Development roadmap established.
 - No implementation yet.
 
+### Frontend editor foundation — 2026-09-15
+
+- Basic Next.js / React editor layout implemented.
+- Monaco Editor integrated.
+- Language selection implemented.
+- Shared language state lifted to `page.tsx`.
+- Initial `EditorFile` model added.
+- `files` and `selectedFileId` state added to `page.tsx`.
+- Editor now receives the selected file's language and content.
+- Editor changes update the selected file's content through an immutable React state update.
+- File Explorer is the next implementation task.
+
 ---
 
 ## Current Task
 
-**Set up the initial CollabCode repository and build the basic Monaco editor.**
+**Finish the single-user multi-file editor foundation by implementing the File Explorer and file switching.**
 
 Suggested immediate sequence:
 
-1. Create repository.
-2. Initialise Next.js + TypeScript.
-3. Establish initial folder structure.
-4. Install/configure Monaco Editor.
-5. Create basic editor page.
-6. Add basic language selector.
-7. Verify local development workflow.
-8. Commit initial working version.
-9. Update this file with the actual implementation state.
+1. Build the basic File Explorer UI.
+2. Display files from `files` state.
+3. Allow clicking/selecting a file.
+4. Highlight the selected file.
+5. Add a basic New File action.
+6. Verify switching files changes the Monaco content.
+7. Verify each file preserves its own content.
+8. Ensure language is stored per file and passed from the selected file.
+9. Update this file after the milestone is complete.
 
 ---
 
 ## Next Tasks
 
-After the basic editor works:
+After the single-user multi-file editor foundation works:
 
-1. Decide/implement initial file model.
-2. Add backend.
-3. Add PostgreSQL persistence.
-4. Implement workspaces/files.
-5. Add authentication.
-6. Add WebSocket infrastructure.
-7. Implement collaboration with Yjs.
+1. Complete File Explorer.
+2. Add file creation.
+3. Add file switching and content preservation.
+4. Add backend.
+5. Add PostgreSQL persistence.
+6. Implement workspaces/files.
+7. Add authentication.
+8. Add WebSocket infrastructure.
+9. Implement collaboration with Yjs.
 
 ---
 
 ## Known Bugs
 
-None.
+None currently known.
+
+### Implementation Notes
+
+- Do not mutate `file.content` directly. Update the `files` state with `setFiles`.
+- Keep `files` in `page.tsx` as the current source of truth for the single-user editor.
+- Do not introduce WebSockets/Yjs/global state management yet; those belong to later phases.
 
 ---
 
