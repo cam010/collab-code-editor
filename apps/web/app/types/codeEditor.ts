@@ -1,4 +1,6 @@
 export type Language =
+  | 'undefined'
+  | 'text'
   | 'python'
   | 'javascript'
   | 'typescript'

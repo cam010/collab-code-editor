@@ -18,7 +18,7 @@ export default function Editor({ file, onCodeChange }: CodeEditorProps) {
   // const [code, setCode] = useState<string>(file.content);
 
   return (
-    <div style={{ height: '90vh', width: '85vw' }}>
+    <div style={{ height: '90vh', width: '85vw'}}>
       <MonacoEditor
         height="100%"
         language={file.language}

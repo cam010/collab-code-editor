@@ -17,7 +17,7 @@ A browser-based collaborative code editor/mini-IDE allowing multiple users to ed
 Build a technically substantial CS portfolio project suitable for software engineering internship/placement applications.
 
 **Current status:**  
-Phase 1 implementation in progress — the basic single-user editor foundation is working.
+Phase 1 implementation complete — the single-user multi-file editor foundation is working.
 
 ---
 
@@ -25,7 +25,7 @@ Phase 1 implementation in progress — the basic single-user editor foundation i
 
 **Phase:** 1 — Basic Editor
 
-**Status:** In progress.
+**Status:** Complete.
 
 ### Current milestone
 
@@ -43,10 +43,10 @@ Build the single-user multi-file editor foundation.
 - [x] Selected file state created
 - [x] Editor displays selected file content
 - [x] Editor changes update the selected file's content
-- [ ] File Explorer
-- [ ] Create new file
-- [ ] Switch between multiple files and preserve content
-- [ ] README contains setup instructions
+- [x] File Explorer
+- [x] Create new file
+- [x] Switch between multiple files and preserve content
+- [x] README contains setup instructions
 
 ---
 
@@ -134,7 +134,7 @@ Next.js / React frontend
 - [x] Controlled Monaco editor value
 - [x] Initial Python language
 - [x] Language selector
-- [x] Shared language state lifted to `page.tsx`
+- [x] Per-file language state
 - [x] Shared `Language` type
 - [x] `EditorFile` type
 - [x] `files` state in `page.tsx`
@@ -142,6 +142,17 @@ Next.js / React frontend
 - [x] Selected file resolved from the file collection
 - [x] Selected file content passed to Monaco
 - [x] Editor changes update the selected file immutably via `setFiles`
+- [x] File Explorer UI
+- [x] File selection and switching
+- [x] Selected file highlighting
+- [x] File creation
+- [x] File content preservation when switching
+- [x] Language stored per file
+- [x] Language selector updates the selected file
+- [x] Navbar reflects the selected file's language
+- [x] Monaco reflects the selected file's language
+- [x] Permanent file-name creation popup
+- [x] README setup instructions
 
 ---
 
@@ -150,7 +161,7 @@ Next.js / React frontend
 ### MVP
 
 - [x] Monaco code editor
-- [ ] File creation/editing
+- [x] File creation/editing
 - [ ] File persistence
 - [ ] User authentication
 - [ ] Workspaces
@@ -197,7 +208,7 @@ app/
         └── fileItem.tsx
 ```
 
-The FileExplorer components are planned/current component locations; File Explorer functionality is not yet implemented.
+The FileExplorer components contain the implemented File Explorer functionality.
 
 Target structure:
 
@@ -421,6 +432,30 @@ Do not present these as settled decisions.
 - Basic Next.js / React editor layout implemented.
 - Monaco Editor integrated.
 - Language selection implemented.
+- Initial `EditorFile` model added.
+- `files` and `selectedFileId` state added to `page.tsx`.
+- Editor receives the selected file's language and content.
+- Editor changes update the selected file's content through an immutable React state update.
+
+### Single-user multi-file editor foundation — 2026-09-18
+
+- File Explorer UI implemented and connected to `files` state.
+- File switching implemented and tested.
+- Selected file highlighting implemented.
+- File creation implemented.
+- File creation uses a permanent popup for the filename.
+- Newly created files default to the `text` language.
+- File content is preserved when switching between files.
+- Language selector fixed to update the selected file's language.
+- Navbar reflects the selected file's language.
+- Monaco Editor reflects the selected file's language.
+- Editor behaviour tested across multiple files.
+- UI appearance improved for the current stage.
+- Duplicate filename handling intentionally deferred for later.
+
+- Basic Next.js / React editor layout implemented.
+- Monaco Editor integrated.
+- Language selection implemented.
 - Shared language state lifted to `page.tsx`.
 - Initial `EditorFile` model added.
 - `files` and `selectedFileId` state added to `page.tsx`.
@@ -432,7 +467,7 @@ Do not present these as settled decisions.
 
 ## Current Task
 
-**Finish the single-user multi-file editor foundation by implementing the File Explorer and file switching.**
+**Phase 1 complete. Begin planning and implementing the backend and persistence foundation.**
 
 Suggested immediate sequence:
 
@@ -452,15 +487,16 @@ Suggested immediate sequence:
 
 After the single-user multi-file editor foundation works:
 
-1. Complete File Explorer.
-2. Add file creation.
-3. Add file switching and content preservation.
-4. Add backend.
-5. Add PostgreSQL persistence.
-6. Implement workspaces/files.
-7. Add authentication.
-8. Add WebSocket infrastructure.
-9. Implement collaboration with Yjs.
+1. Choose/confirm backend framework.
+2. Set up the Node.js + TypeScript backend.
+3. Establish the initial REST API.
+4. Design the initial PostgreSQL schema.
+5. Connect the backend to PostgreSQL.
+6. Implement workspace/file persistence.
+7. Connect the frontend to the backend.
+8. Add authentication and permissions.
+9. Add WebSocket infrastructure.
+10. Implement collaboration with Yjs.
 
 ---
 
@@ -471,7 +507,17 @@ None currently known.
 ### Implementation Notes
 
 - Do not mutate `file.content` directly. Update the `files` state with `setFiles`.
-- Keep `files` in `page.tsx` as the current source of truth for the single-user editor.
+- `files` in `page.tsx` remains the current source of truth for the single-user editor.
+- Each file stores its own language and content.
+- The Navbar and Monaco Editor derive their language from the currently selected file.
+- File creation currently defaults new files to the `text` language.
+- Duplicate filename handling is intentionally deferred.
+- Do not introduce WebSockets/Yjs/global state management yet; those belong to later phases.
+- `files` in `page.tsx` remains the current source of truth for the single-user editor.
+- Each file stores its own language and content.
+- The Navbar and Monaco Editor derive their language from the currently selected file.
+- File creation currently defaults new files to the `text` language.
+- Duplicate filename handling is intentionally deferred.
 - Do not introduce WebSockets/Yjs/global state management yet; those belong to later phases.
 
 ---

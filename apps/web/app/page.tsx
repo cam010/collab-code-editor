@@ -35,21 +35,44 @@ export default function Page() {
     );
   };
 
-  const [selectedFileId, setSelectedFileId] = useState('1');
+  const addFile = (name: string) => {
+    const newFile: FileItem = {
+      id: Date.now().toString(),
+      name,
+      language: "text",
+      content: ``,
+    };
+    setFiles((prevFiles) => [...prevFiles, newFile]);
+    setSelectedFileId(newFile.id);
+  };
 
-  const [language, setLanguage] = useState<Language>("python");
+  const [selectedFileId, setSelectedFileId] = useState('1');
+  const selectedFile = files.find(
+    (file) => file.id === selectedFileId
+  )
+
+  const setLanguage = (language: Language) => {
+    setFiles((currentFiles) =>
+      currentFiles.map((file) =>
+        file.id === selectedFileId
+          ? { ...file, language }
+          : file
+      )
+    );
+  }
+
 
   return (
     <>
       <Menubar />
       <Navbar
-        language={language}
+        language={selectedFile!.language}
         setLanguage={setLanguage} />
       <div style={{ display: 'flex' }}>
-        <FileExplorer fileList={files} setSelectedFileId={setSelectedFileId} />
+        <FileExplorer fileList={files} setSelectedFileId={setSelectedFileId} selectedFileId={selectedFileId} addFile={addFile} />
         <Editor
-          file={files.find(f => f.id === selectedFileId)!} 
-          onCodeChange={updateFileContent}/>
+          file={selectedFile!}
+          onCodeChange={updateFileContent} />
       </div>
     </>
   );
