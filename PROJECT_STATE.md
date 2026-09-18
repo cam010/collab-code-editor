@@ -17,19 +17,19 @@ A browser-based collaborative code editor/mini-IDE allowing multiple users to ed
 Build a technically substantial CS portfolio project suitable for software engineering internship/placement applications.
 
 **Current status:**  
-Phase 1 implementation complete — the single-user multi-file editor foundation is working.
+Phase 1 complete. Phase 2 backend and persistence foundation is in progress; the initial Express + TypeScript REST API is working.
 
 ---
 
 ## Current Phase
 
-**Phase:** 1 — Basic Editor
+**Phase:** 2 — Backend and Persistence Foundation
 
-**Status:** Complete.
+**Status:** In progress.
 
 ### Current milestone
 
-Build the single-user multi-file editor foundation.
+Design and implement the PostgreSQL persistence foundation for workspaces and files.
 
 ### Definition of done
 
@@ -63,11 +63,15 @@ These are currently agreed unless explicitly changed.
 ### Backend
 - Node.js
 - TypeScript
+- Express
 - REST API
 - WebSockets
+- Routes → controllers → services → repositories architecture
 
 ### Database
 - PostgreSQL
+- Kysely query builder
+- Repository layer will isolate database access from application logic
 
 ### Real-time collaboration
 - Yjs / CRDT
@@ -154,6 +158,22 @@ Next.js / React frontend
 - [x] Permanent file-name creation popup
 - [x] README setup instructions
 
+### Phase 2 — Backend Foundation
+
+- [x] Node.js + TypeScript backend project created
+- [x] Express configured
+- [x] ES module configuration established
+- [x] Development/build/start scripts configured
+- [x] `GET /health` endpoint implemented
+- [x] Initial route/controller/service separation implemented
+- [x] `GET /api/workspaces` endpoint implemented
+- [x] Temporary in-memory workspace service implemented for API validation
+- [ ] PostgreSQL schema designed
+- [ ] PostgreSQL connected
+- [ ] Kysely configured
+- [ ] Repository layer implemented
+- [ ] Workspace/file persistence implemented
+
 ---
 
 ## Planned Features
@@ -189,26 +209,28 @@ Next.js / React frontend
 
 ## Current Repository Structure
 
-Current known frontend structure:
+Current known structure:
 
 ```text
-app/
-├── page.tsx
-├── types/
-│   └── editor.ts
-└── Components/
-    ├── CodeEditor/
-    │   └── codeEditor.tsx
-    ├── Navbar/
-    │   └── navbar.tsx
-    ├── Menubar/
-    │   └── menubar.tsx
-    └── FileExplorer/
-        ├── fileExplorer.tsx
-        └── fileItem.tsx
+apps/web/
+└── [existing Next.js frontend]
+
+server/
+├── src/
+│   ├── app.ts
+│   ├── index.ts
+│   ├── routes/
+│   │   └── workspaceRoutes.ts
+│   ├── controllers/
+│   │   └── workspaceController.ts
+│   └── services/
+│       └── workspaceService.ts
+├── package.json
+├── tsconfig.json
+└── .gitignore
 ```
 
-The FileExplorer components contain the implemented File Explorer functionality.
+The frontend remains the completed Phase 1 editor. The backend currently exposes a health endpoint and a temporary in-memory workspaces endpoint using route/controller/service separation. A repository/database layer has not yet been added.
 
 Target structure:
 
@@ -402,7 +424,6 @@ Docker and CI/CD should be introduced once the application has enough functional
 
 These are intentionally NOT final:
 
-- Backend framework: Express / Fastify / NestJS / other
 - Authentication/session strategy
 - Exact PostgreSQL schema
 - Exact WebSocket protocol
@@ -463,40 +484,50 @@ Do not present these as settled decisions.
 - Editor changes update the selected file's content through an immutable React state update.
 - File Explorer is the next implementation task.
 
+### Backend REST foundation — 2026-09-18
+
+- Express selected as the backend framework to keep the first TypeScript backend relatively lightweight and expose core backend concepts directly.
+- Kysely selected as the PostgreSQL query builder; database access will later sit behind repository boundaries.
+- Node.js + TypeScript backend created under `server/`.
+- Express configured using ES modules and TypeScript `NodeNext` module resolution.
+- Development, build and start scripts configured.
+- `app.ts` separated from `index.ts` so the Express application can later be imported independently for testing.
+- `GET /health` implemented and verified.
+- Initial `routes`, `controllers`, and `services` structure created for workspaces.
+- `GET /api/workspaces` implemented and verified using temporary in-memory workspace data.
+- PostgreSQL and Kysely are not connected yet.
+
 ---
 
 ## Current Task
 
-**Phase 1 complete. Begin planning and implementing the backend and persistence foundation.**
+**Design the initial PostgreSQL persistence model and then connect the Express backend to PostgreSQL using Kysely.**
 
 Suggested immediate sequence:
 
-1. Build the basic File Explorer UI.
-2. Display files from `files` state.
-3. Allow clicking/selecting a file.
-4. Highlight the selected file.
-5. Add a basic New File action.
-6. Verify switching files changes the Monaco content.
-7. Verify each file preserves its own content.
-8. Ensure language is stored per file and passed from the selected file.
-9. Update this file after the milestone is complete.
+1. Design the initial `workspaces` and `files` schema without prematurely finalising authentication/session tables.
+2. Decide key types, constraints, relationships, timestamps and indexes required for the first persistence milestone.
+3. Set up PostgreSQL locally.
+4. Install/configure Kysely and the PostgreSQL driver.
+5. Add the database layer.
+6. Add a workspace repository.
+7. Replace the temporary in-memory workspace data with a real PostgreSQL query.
+8. Verify `GET /api/workspaces` returns persisted data without changing the API contract.
 
 ---
 
 ## Next Tasks
 
-After the single-user multi-file editor foundation works:
-
-1. Choose/confirm backend framework.
-2. Set up the Node.js + TypeScript backend.
-3. Establish the initial REST API.
-4. Design the initial PostgreSQL schema.
-5. Connect the backend to PostgreSQL.
-6. Implement workspace/file persistence.
-7. Connect the frontend to the backend.
-8. Add authentication and permissions.
-9. Add WebSocket infrastructure.
-10. Implement collaboration with Yjs.
+1. Design the initial PostgreSQL schema for workspaces/files.
+2. Set up PostgreSQL locally.
+3. Configure Kysely + PostgreSQL driver.
+4. Add repository/database layers.
+5. Implement workspace/file persistence.
+6. Connect the frontend editor to the REST API.
+7. Add authentication and permissions.
+8. Add WebSocket infrastructure.
+9. Implement collaboration with Yjs.
+10. Add collaboration/reconnection testing as those features are introduced.
 
 ---
 
@@ -519,6 +550,11 @@ None currently known.
 - File creation currently defaults new files to the `text` language.
 - Duplicate filename handling is intentionally deferred.
 - Do not introduce WebSockets/Yjs/global state management yet; those belong to later phases.
+- Backend framework is now Express with TypeScript.
+- Kysely is the selected PostgreSQL query builder, but it has not yet been installed/configured.
+- Keep database-specific calls behind repositories rather than scattering Kysely calls through controllers/services.
+- `GET /api/workspaces` currently uses temporary in-memory data and does not constitute implemented workspace persistence.
+- Preserve the existing route → controller → service separation as persistence is added.
 
 ---
 
