@@ -1,16 +1,5 @@
-type Workspace =  {
-    id: string
-    name: string
-}
+import { findAllWorkspaces } from "../repositories/workspaceRepository.js";
 
-const workspaces: Workspace[] = [
-    // Temp Data for now
-    {
-        id: "1",
-        name: "My Workspace"
-    }
-]
-
-export function getWorkspaces(): Workspace[] {
-    return workspaces
+export async function getWorkspaces() {
+    return findAllWorkspaces();
 }
