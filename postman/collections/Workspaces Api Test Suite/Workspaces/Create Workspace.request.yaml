@@ -1,0 +1,39 @@
+$kind: http-request
+url: "{{baseUrl}}/api/workspaces"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: "{\r
+
+    \    \"name\": \"Postman Test Workspace\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.test(\"Returns 201 Created\", function () {\r
+
+      \    pm.response.to.have.status(201);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Returns workspace data\", function () {\r
+
+      \    pm.expect(response.id).to.be.a(\"string\");\r
+
+      \    pm.expect(response.name).to.eql(\"Postman Test Workspace\");\r
+
+      });\r
+
+      \r
+
+      pm.collectionVariables.set(\"workspaceId\", response.id);"
+    language: text/javascript
+order: 1790010771156

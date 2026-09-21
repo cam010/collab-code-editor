@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{baseUrl}}/api/workspaces/{{workspaceId}}/files"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.test(\"Returns 200 OK\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Returns a files array\", function () {\r
+
+      \    pm.expect(response).to.be.an(\"array\");\r
+
+      });"
+    language: text/javascript
+order: 3618961247251639
