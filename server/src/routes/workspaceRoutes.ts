@@ -1,9 +1,9 @@
 import { Router } from "express"
-import { createWorkspaceController, getAllWorkspaces } from "../controllers/workspaceController.js"
+import { createWorkspaceController, getAllWorkspacesController } from "../controllers/workspaceController.js"
 
 const router = Router()
 
-router.get("/", getAllWorkspaces)
+router.get("/", getAllWorkspacesController)
 router.post("/", createWorkspaceController)
 
 export default router

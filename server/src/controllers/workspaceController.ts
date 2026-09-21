@@ -1,8 +1,8 @@
 import { Request, Response } from "express"
-import { createWorkspaceService, getWorkspaces } from "../services/workspaceService.js"
+import { createWorkspaceService, getAllWorkspacesService } from "../services/workspaceService.js"
 
-export async function getAllWorkspaces(req: Request, res: Response): Promise<void> {
-    const workspaces = await getWorkspaces()
+export async function getAllWorkspacesController(req: Request, res: Response): Promise<void> {
+    const workspaces = await getAllWorkspacesService()
 
     res.status(200).json(workspaces)
 }

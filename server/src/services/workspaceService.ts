@@ -1,8 +1,8 @@
-import { findAllWorkspaces, createWorkspaceRepository } from "../repositories/workspaceRepository.js";
+import { getAllWorkspacesRepository, createWorkspaceRepository } from "../repositories/workspaceRepository.js";
 import { randomUUID } from "node:crypto";
 
-export async function getWorkspaces() {
-    return findAllWorkspaces();
+export async function getAllWorkspacesService() {
+    return getAllWorkspacesRepository();
 }
 
 export async function createWorkspaceService(name: string) {
