@@ -11,10 +11,10 @@ export interface FileTable {
   id: string;
   workspace_id: string;
   name: string;
-  language: string;
-  content: string;
-  created_at: Date;
-  updated_at: Date;
+  language: Generated<string>;
+  content: Generated<string>;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
 }
 
 export interface Database {

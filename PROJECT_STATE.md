@@ -17,7 +17,7 @@ A browser-based collaborative code editor/mini-IDE allowing multiple users to ed
 Build a technically substantial CS portfolio project suitable for software engineering internship/placement applications.
 
 **Current status:**  
-Phase 1 complete. Phase 2 backend and persistence foundation is in progress; PostgreSQL + Kysely are connected and the workspaces read endpoint now uses persisted database data.
+Phase 1 complete. Phase 2 backend and persistence foundation is in progress; PostgreSQL + Kysely are connected and both workspace listing and persisted workspace creation are implemented.
 
 ---
 
@@ -45,7 +45,7 @@ Design and implement the PostgreSQL persistence foundation for workspaces and fi
 - [x] Repository layer introduced for database access
 - [x] `GET /api/workspaces` migrated from temporary in-memory data to PostgreSQL
 - [x] Persisted workspace data verified through the REST API and across backend restarts
-- [ ] `POST /api/workspaces` creates persisted workspaces with application-generated UUIDs
+- [x] `POST /api/workspaces` creates persisted workspaces with application-generated UUIDs
 - [ ] File persistence operations implemented through a file repository
 - [ ] Frontend editor connected to the REST persistence API
 
@@ -174,7 +174,8 @@ Next.js / React frontend
 - [x] Kysely configured with PostgreSQL driver
 - [x] Workspace repository layer implemented
 - [x] `GET /api/workspaces` reads persisted PostgreSQL data
-- [ ] Workspace creation API implemented
+- [x] Workspace creation API implemented
+- [x] Workspace creation validates non-empty names and returns `201 Created`
 - [ ] File persistence API implemented
 
 ---
@@ -241,7 +242,7 @@ server/
 └── .gitignore
 ```
 
-The frontend remains the completed Phase 1 editor. The backend exposes a health endpoint and a PostgreSQL-backed `GET /api/workspaces` endpoint using route → controller → service → repository separation. Kysely is configured and the initial database migration is applied.
+The frontend remains the completed Phase 1 editor. The backend exposes a health endpoint plus PostgreSQL-backed `GET /api/workspaces` and `POST /api/workspaces` endpoints using route → controller → service → repository separation. Workspace creation validates non-empty names, generates UUIDs in the application, persists through Kysely, and returns `201 Created`. Kysely is configured and the initial database migration is applied.
 
 Target structure:
 
@@ -548,29 +549,42 @@ Do not present these as settled decisions.
 - `GET /api/workspaces` now returns persisted data while preserving the existing API response shape (`id`, `name`).
 - Verified persistence survives backend restarts.
 
+### Persisted workspace creation — 2026-09-21
+
+- Added `POST /api/workspaces` through the existing route → controller → service → repository architecture.
+- Added workspace repository insert logic using Kysely.
+- Updated Kysely workspace timestamp types to reflect database-generated `created_at` and `updated_at` values.
+- Workspace UUIDs are generated in the application with `crypto.randomUUID()`.
+- Added HTTP-boundary validation requiring the workspace name to be a non-empty string after trimming.
+- Successful workspace creation returns `201 Created` with the created workspace.
+- Verified valid workspace creation and retrieval through the existing `GET /api/workspaces` endpoint.
+- Verified invalid blank workspace names return `400` and are not persisted.
+- Workspace names remain non-unique; workspace identity is based on UUID.
+
 ---
 
 ## Current Task
 
-**Implement persisted workspace creation through the existing backend architecture.**
+**Implement persisted file CRUD / workspace-file loading through a file repository.**
 
 Suggested immediate sequence:
 
-1. Add `POST /api/workspaces`.
-2. Validate the incoming workspace name at the HTTP/application boundary.
-3. Generate the workspace UUID in the application with `crypto.randomUUID()`.
-4. Add repository insert logic using Kysely.
-5. Return `201 Created` with the created workspace while keeping database access inside the repository.
-6. Verify the new workspace appears through the existing `GET /api/workspaces` endpoint and survives backend restarts.
-7. Then begin persisted file CRUD / workspace-file loading.
+1. Review the existing `FileTable` Kysely types against the implemented database defaults.
+2. Add a file repository while keeping Kysely/database-specific access behind the repository boundary.
+3. Implement loading files for a workspace.
+4. Implement persisted file creation with application-generated UUIDs.
+5. Add file update operations needed for name, language and content persistence.
+6. Add file deletion.
+7. Validate file inputs at the HTTP/application boundary and handle the existing per-workspace filename uniqueness constraint appropriately.
+8. Verify file data survives backend restarts before connecting the frontend editor.
 
 ---
 
 ## Next Tasks
 
-1. Implement `POST /api/workspaces` with application-generated UUIDs.
-2. Add request validation and appropriate API error handling for workspace creation.
-3. Implement persisted file CRUD / workspace-file loading through a file repository.
+1. Implement persisted file CRUD / workspace-file loading through a file repository.
+2. Add request validation and appropriate API error handling for file operations.
+3. Verify file persistence, per-workspace filename uniqueness and workspace/file relationships through the REST API.
 4. Connect the frontend editor to the REST persistence API.
 5. Add authentication and permissions.
 6. Add WebSocket infrastructure.
@@ -602,6 +616,10 @@ None currently known.
 - Kysely is configured and connected to the local PostgreSQL database.
 - Keep database-specific calls behind repositories rather than scattering Kysely calls through controllers/services.
 - `GET /api/workspaces` now reads persisted workspace data through `workspaceRepository.ts`.
+- `POST /api/workspaces` creates persisted workspaces through the existing route → controller → service → repository flow.
+- Workspace creation validates that `name` is a non-empty string after trimming and returns `400` for invalid blank names.
+- Workspace creation returns `201 Created`; workspace UUIDs are generated in the service with `crypto.randomUUID()`.
+- Workspace names are not globally unique; UUIDs identify workspaces.
 - Workspace/file IDs are UUIDs generated by the application rather than database defaults.
 - The database enforces unique filenames within a workspace with `UNIQUE(workspace_id, name)`.
 - `language` remains a flexible `VARCHAR(50)` rather than a database enum/check; runtime API validation can be added at the application boundary.
