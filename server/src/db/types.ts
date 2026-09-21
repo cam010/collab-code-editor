@@ -1,8 +1,10 @@
+import { Generated } from "kysely";
+
 export interface WorkspaceTable {
   id: string;
   name: string;
-  created_at: Date;
-  updated_at: Date;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
 }
 
 export interface FileTable {

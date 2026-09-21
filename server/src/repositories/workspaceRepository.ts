@@ -6,3 +6,14 @@ export async function findAllWorkspaces() {
         .select(["id", "name"])
         .execute();
 }
+
+export async function createWorkspaceRepository(id: string, name: string) {
+    return db
+        .insertInto("workspaces")
+        .values({
+            id,
+            name,
+        })
+        .returning(["id", "name"])
+        .executeTakeFirstOrThrow()
+}
