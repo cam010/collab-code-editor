@@ -20,8 +20,8 @@ export async function createWorkspaceRepository(id: string, name: string) {
 
 export async function getWorkspaceByIdRepository(id: string) {
     return db
-    .selectFrom("workspaces")
-    .select(["id", "name"])
-    .where("id", "=", id)
-    .executeTakeFirst();
+        .selectFrom("workspaces")
+        .select(["id", "name"])
+        .where("id", "=", id)
+        .executeTakeFirst();
 }

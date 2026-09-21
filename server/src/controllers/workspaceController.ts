@@ -1,6 +1,9 @@
 import { Request, Response } from "express"
 import { createWorkspaceService, getAllWorkspacesService, getWorkspaceByIdService } from "../services/workspaceService.js"
 
+const UUID_REGEX =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export async function getAllWorkspacesController(req: Request, res: Response): Promise<void> {
     const workspaces = await getAllWorkspacesService()
 
@@ -8,7 +11,7 @@ export async function getAllWorkspacesController(req: Request, res: Response): P
 }
 
 export async function createWorkspaceController(req: Request, res: Response) {
-    const { name } = req.body;
+    const name = req.body?.name;
 
     if (typeof name !== "string" || name.trim() == "") {
         return res.status(400).json({
@@ -23,10 +26,13 @@ export async function createWorkspaceController(req: Request, res: Response) {
 
 export async function getWorkspaceByIdController(req: Request, res: Response) {
     const { workspaceId } = req.params;
-    if (typeof workspaceId !== "string" || workspaceId.trim() == "") {
+    if (
+        typeof workspaceId !== "string" ||
+        !UUID_REGEX.test(workspaceId)
+    ) {
         return res.status(400).json({
-            error: "Workspace id is required"
-        })
+            error: "Invalid workspace id",
+        });
     }
 
     const workspace = await getWorkspaceByIdService(workspaceId.trim());
