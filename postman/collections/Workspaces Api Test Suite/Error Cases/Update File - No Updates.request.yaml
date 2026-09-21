@@ -1,0 +1,27 @@
+$kind: http-request
+url: "{{baseUrl}}/api/workspaces/{{workspaceId}}/files/{{fileId}}"
+method: PATCH
+body:
+  type: json
+  content: "{}"
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.test(\"Returns 400 Bad Request\", function () {\r
+
+      \    pm.response.to.have.status(400);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Returns an error message\", function () {\r
+
+      \    pm.expect(response.error).to.be.a(\"string\");\r
+
+      });"
+    language: text/javascript
+order: 4503599033285733

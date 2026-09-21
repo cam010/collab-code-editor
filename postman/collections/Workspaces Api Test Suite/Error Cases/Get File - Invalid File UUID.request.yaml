@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{baseUrl}}/api/workspaces/{{workspaceId}}/files/banana"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.test(\"Returns 400 Bad Request\", function () {\r
+
+      \    pm.response.to.have.status(400);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Returns invalid file id error\", function () {\r
+
+      \    pm.expect(response.error).to.eql(\"Invalid file id\");\r
+
+      });"
+    language: text/javascript
+order: 4496771201868504

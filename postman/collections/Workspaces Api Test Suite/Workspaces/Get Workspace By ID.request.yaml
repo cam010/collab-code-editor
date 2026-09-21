@@ -1,4 +1,4 @@
 $kind: http-request
 url: "{{baseUrl}}/api/workspaces/{{workspaceId}}"
 method: GET
-order: 3247074379829011
+order: 6000

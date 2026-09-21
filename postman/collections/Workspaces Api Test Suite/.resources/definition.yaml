@@ -2,3 +2,5 @@ $kind: collection
 variables:
   baseUrl: ""
   workspaceId: ""
+  fileId: ""
+  otherWorkspaceId: ""

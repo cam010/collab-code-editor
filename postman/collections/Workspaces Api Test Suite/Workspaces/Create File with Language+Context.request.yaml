@@ -1,0 +1,55 @@
+$kind: http-request
+url: "{{baseUrl}}/api/workspaces/{{workspaceId}}/files"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"name\": \"hello.ts\",\r
+
+    \    \"language\": \"typescript\",\r
+
+    \    \"content\": \"console.log('Hello CollabCode');\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.test(\"Returns 201 Created\", function () {\r
+
+      \    pm.response.to.have.status(201);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Uses supplied file values\", function () {\r
+
+      \    pm.expect(response.name).to.eql(\"hello.ts\");\r
+
+      \    pm.expect(response.language).to.eql(\"typescript\");\r
+
+      \    pm.expect(response.content).to.eql(\r
+
+      \        \"console.log('Hello CollabCode');\"\r
+
+      \    );\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Belongs to the correct workspace\", function () {\r
+
+      \    pm.expect(response.workspace_id).to.eql(\r
+
+      \        pm.collectionVariables.get(\"workspaceId\")\r
+
+      \    );\r
+
+      });"
+    language: text/javascript
+order: 4000

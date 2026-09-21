@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{baseUrl}}/api/workspaces/{{otherWorkspaceId}}/files/{{fileId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.test(\"Returns 404 Not Found\", function () {\r
+
+      \    pm.response.to.have.status(404);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Returns file not found error\", function () {\r
+
+      \    pm.expect(response.error).to.eql(\"File not found\");\r
+
+      });"
+    language: text/javascript
+order: 4503555591805623

@@ -1,0 +1,50 @@
+$kind: http-request
+name: Create File no Language/Content
+url: "{{baseUrl}}/api/workspaces/{{workspaceId}}/files"
+method: POST
+body:
+  type: json
+  content: "{\r\n    \"name\": \"index.ts\"\r\n}"
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.test(\"Returns 201 Created\", function () {\r
+
+      \    pm.response.to.have.status(201);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Returns created file\", function () {\r
+
+      \    pm.expect(response.id).to.be.a(\"string\");\r
+
+      \    pm.expect(response.workspace_id).to.eql(\r
+
+      \        pm.collectionVariables.get(\"workspaceId\")\r
+
+      \    );\r
+
+      \    pm.expect(response.name).to.eql(\"index.ts\");\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Uses default language and content\", function () {\r
+
+      \    pm.expect(response.language).to.eql(\"text\");\r
+
+      \    pm.expect(response.content).to.eql(\"\");\r
+
+      });\r
+
+      \r
+
+      pm.collectionVariables.set(\"fileId\", response.id);"
+    language: text/javascript
+order: 3000

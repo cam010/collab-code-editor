@@ -1,0 +1,61 @@
+$kind: http-request
+url: "{{baseUrl}}/api/workspaces/{{workspaceId}}/files/{{fileId}}"
+method: PATCH
+body:
+  type: json
+  content: "{\r
+
+    \    \"content\": \"console.log('Updated from Postman');\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.test(\"Returns 200 OK\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Updates the file content\", function () {\r
+
+      \    pm.expect(response.id).to.eql(\r
+
+      \        pm.collectionVariables.get(\"fileId\")\r
+
+      \    );\r
+
+      \r
+
+      \    pm.expect(response.workspace_id).to.eql(\r
+
+      \        pm.collectionVariables.get(\"workspaceId\")\r
+
+      \    );\r
+
+      \r
+
+      \    pm.expect(response.content).to.eql(\r
+
+      \        \"console.log('Updated from Postman');\"\r
+
+      \    );\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Leaves other fields unchanged\", function () {\r
+
+      \    pm.expect(response.name).to.eql(\"index.ts\");\r
+
+      \    pm.expect(response.language).to.eql(\"text\");\r
+
+      });"
+    language: text/javascript
+order: 1417109109216618
