@@ -1,11 +1,14 @@
 import {
   createFileRepository,
   deleteFileRepository,
+  DuplicateFileNameError,
   getFileByFileIdRepository,
   getFilesByWorkspaceIdRepository,
   updateFileRepository,
 } from "../repositories/fileRepository.js";
+
 import { getWorkspaceByIdRepository } from "../repositories/workspaceRepository.js";
+
 import { randomUUID } from "node:crypto";
 
 export async function getFilesByWorkspaceIdService(workspaceId: string) {
@@ -28,12 +31,31 @@ export async function createFileService(
   const workspace = await getWorkspaceByIdRepository(workspaceId);
 
   if (!workspace) {
-    return undefined;
+    return { status: "workspace_not_found" } as const;
   }
 
   const id = randomUUID();
 
-  return createFileRepository(id, workspaceId, name, language, content);
+  try {
+    const file = await createFileRepository(
+      id,
+      workspaceId,
+      name,
+      language,
+      content
+    );
+
+    return {
+      status: "created",
+      file,
+    } as const;
+  } catch (error) {
+    if (error instanceof DuplicateFileNameError) {
+      return { status: "duplicate_name" } as const;
+    }
+
+    throw error;
+  }
 }
 
 export async function getFileByFileIdService(
@@ -52,9 +74,33 @@ export async function updateFileService(
     content?: string;
   }
 ) {
-  return updateFileRepository(workspaceId, fileId, updates);
+  const workspace = await getWorkspaceByIdRepository(workspaceId);
+
+  if (!workspace) {
+    return { status: "workspace_not_found" } as const;
+  }
+
+  try {
+    const file = await updateFileRepository(workspaceId, fileId, updates);
+    if (file === undefined) {
+      return {
+        status: "file_not_found",
+      } as const;
+    }
+
+    return {
+      status: "updated",
+      file,
+    } as const;
+  } catch (error) {
+    if (error instanceof DuplicateFileNameError) {
+      return { status: "duplicate_name" } as const;
+    }
+
+    throw error;
+  }
 }
 
 export async function deleteFileService(workspaceId: string, fileId: string) {
-    return deleteFileRepository(workspaceId, fileId)
+  return deleteFileRepository(workspaceId, fileId);
 }

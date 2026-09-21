@@ -17,7 +17,7 @@ A browser-based collaborative code editor/mini-IDE allowing multiple users to ed
 Build a technically substantial CS portfolio project suitable for software engineering internship/placement applications.
 
 **Current status:**  
-Phase 1 complete. Phase 2 backend and persistence foundation is in progress; PostgreSQL + Kysely are connected, workspace persistence is implemented, and persisted file CRUD (create/list/get/update/delete) is implemented with Postman coverage.
+Phase 1 complete. Phase 2 backend and persistence foundation is in progress; the backend persistence work is complete and verified, including clean duplicate-filename handling and CRUD persistence across backend restarts. The remaining Phase 2 milestone is connecting the frontend editor to the REST persistence API.
 
 ---
 
@@ -47,6 +47,9 @@ Design and implement the PostgreSQL persistence foundation for workspaces and fi
 - [x] Persisted workspace data verified through the REST API and across backend restarts
 - [x] `POST /api/workspaces` creates persisted workspaces with application-generated UUIDs
 - [x] File persistence operations implemented through a file repository (create/list/get/update/delete)
+- [x] Full Postman REST regression collection passes, including deletion coverage
+- [x] Per-workspace duplicate filenames return controlled `409 Conflict` responses for create and rename collisions
+- [x] Complete file CRUD persistence verified across backend restarts
 - [ ] Frontend editor connected to the REST persistence API
 
 ---
@@ -177,6 +180,8 @@ Next.js / React frontend
 - [x] Workspace creation API implemented
 - [x] Workspace creation validates non-empty names and returns `201 Created`
 - [x] File persistence API implemented (create/list/get/update/delete)
+- [x] Duplicate filename constraint errors translated cleanly through repository/service/controller layers to `409 Conflict`
+- [x] File CRUD regression and restart-persistence verification completed
 
 ---
 
@@ -584,31 +589,45 @@ Do not present these as settled decisions.
 - Successful deletion returns `204 No Content`; the repository uses `DELETE ... RETURNING` to distinguish a deleted row from a missing file without a separate existence query.
 - Added Postman coverage for successful deletion, retrieval-after-delete (`404`), malformed workspace/file UUIDs, and deletion of a nonexistent file.
 
+### Persistence constraint hardening and final backend verification — 2026-09-22
+
+- Ran the full Postman REST regression collection, including file deletion coverage; all tests passed.
+- Added clean handling for the existing per-workspace filename uniqueness constraint instead of surfacing raw PostgreSQL errors.
+- Repository code recognises PostgreSQL SQLSTATE `23505` specifically for the `files_workspace_id_name_unique` constraint and translates it to `DuplicateFileNameError`.
+- Service/controller flow translates duplicate filename outcomes to `409 Conflict` without exposing PostgreSQL-specific details at the HTTP boundary.
+- Duplicate filename handling is applied to both file creation and PATCH rename collisions.
+- Verified a duplicate filename in the same workspace returns `409`, while the same filename in a different workspace remains allowed.
+- Verified normal file renames continue to succeed.
+- Verified complete file CRUD data and behaviour persist correctly across backend restarts.
+- Backend persistence/constraint verification is now complete; frontend REST integration is the next task.
+
 ---
 
 ## Current Task
 
-**Verify remaining file persistence/constraint behaviour, then connect the frontend editor to the REST persistence API.**
+**Connect the frontend editor to the REST persistence API.**
+
+Backend persistence verification is complete. The next session should begin with the existing `page.tsx` frontend state and integrate persisted files incrementally.
 
 Suggested immediate sequence:
 
-1. Run the full Postman collection including the new deletion cases.
-2. Verify per-workspace filename uniqueness is handled cleanly by the API rather than surfacing a raw database error.
-3. Verify complete file CRUD data/behaviour across backend restarts.
-4. Connect the frontend editor to the REST persistence API.
+1. Load persisted files for a workspace with `GET /api/workspaces/:workspaceId/files` and populate the existing `files` state.
+2. Connect frontend file creation to `POST /api/workspaces/:workspaceId/files`.
+3. Connect file metadata updates/renames to `PATCH /api/workspaces/:workspaceId/files/:fileId`.
+4. Add sensible debounced/autosave persistence for editor content rather than PATCHing on every Monaco keystroke.
+5. Connect file deletion to `DELETE /api/workspaces/:workspaceId/files/:fileId`.
+6. Verify the editor remains correct across page/backend restarts before moving to authentication.
 
 ---
 
 ## Next Tasks
 
-1. Run the full Postman collection including file deletion coverage.
-2. Handle the existing per-workspace filename uniqueness constraint with appropriate API errors.
-3. Verify complete file CRUD persistence and behaviour across backend restarts.
-4. Connect the frontend editor to the REST persistence API.
-5. Add authentication and permissions.
-6. Add WebSocket infrastructure.
-7. Implement collaboration with Yjs.
-8. Add collaboration/reconnection testing as those features are introduced.
+1. Connect the frontend editor to the REST persistence API.
+2. Verify end-to-end frontend file persistence across page/backend restarts.
+3. Add authentication and permissions.
+4. Add WebSocket infrastructure.
+5. Implement collaboration with Yjs.
+6. Add collaboration/reconnection testing as those features are introduced.
 
 ---
 
@@ -623,13 +642,13 @@ None currently known.
 - Each file stores its own language and content.
 - The Navbar and Monaco Editor derive their language from the currently selected file.
 - File creation currently defaults new files to the `text` language.
-- Duplicate filename handling is intentionally deferred.
+- Duplicate filename handling is implemented: the repository recognises PostgreSQL unique violation `23505` for `files_workspace_id_name_unique`, translates it to an application-level duplicate filename error, and create/rename collisions return `409 Conflict`.
 - Do not introduce WebSockets/Yjs/global state management yet; those belong to later phases.
 - `files` in `page.tsx` remains the current source of truth for the single-user editor.
 - Each file stores its own language and content.
 - The Navbar and Monaco Editor derive their language from the currently selected file.
 - File creation currently defaults new files to the `text` language.
-- Duplicate filename handling is intentionally deferred.
+- Duplicate filename handling is implemented for both file creation and PATCH rename collisions; the same filename remains valid in different workspaces.
 - Do not introduce WebSockets/Yjs/global state management yet; those belong to later phases.
 - Backend framework is now Express with TypeScript.
 - Kysely is configured and connected to the local PostgreSQL database.

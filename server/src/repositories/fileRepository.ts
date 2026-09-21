@@ -1,5 +1,11 @@
 import { db } from "../db/database.js";
-import { FileUpdates } from "../types/types.js";
+
+export class DuplicateFileNameError extends Error {
+  constructor() {
+    super("A file with this name already exists in this workspace");
+    this.name = "DuplicateFileNameError";
+  }
+}
 
 export async function getFilesByWorkspaceIdRepository(workspaceId: string) {
   return db
@@ -23,12 +29,26 @@ export async function createFileRepository(
     ...(language !== undefined && { language }),
     ...(content !== undefined && { content }),
   };
+  try {
+    return await db
+      .insertInto("files")
+      .values(values)
+      .returning(["id", "workspace_id", "name", "language", "content"])
+      .executeTakeFirstOrThrow();
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      "constraint" in error &&
+      error.code === "23505" &&
+      error.constraint === "files_workspace_id_name_unique"
+    ) {
+      throw new DuplicateFileNameError();
+    }
 
-  return db
-    .insertInto("files")
-    .values(values)
-    .returning(["id", "workspace_id", "name", "language", "content"])
-    .executeTakeFirstOrThrow();
+    throw error;
+  }
 }
 
 export async function getFileByFileIdRepository(
@@ -53,13 +73,28 @@ export async function updateFileRepository(
     content?: string;
   }
 ) {
-  return db
-    .updateTable("files")
-    .set(updates)
-    .where("workspace_id", "=", workspaceId)
-    .where("id", "=", fileId)
-    .returning(["id", "workspace_id", "name", "language", "content"])
-    .executeTakeFirst();
+  try {
+    return await db
+      .updateTable("files")
+      .set(updates)
+      .where("workspace_id", "=", workspaceId)
+      .where("id", "=", fileId)
+      .returning(["id", "workspace_id", "name", "language", "content"])
+      .executeTakeFirst();
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      "constraint" in error &&
+      error.code === "23505" &&
+      error.constraint === "files_workspace_id_name_unique"
+    ) {
+      throw new DuplicateFileNameError();
+    }
+
+    throw error;
+  }
 }
 
 export async function deleteFileRepository(

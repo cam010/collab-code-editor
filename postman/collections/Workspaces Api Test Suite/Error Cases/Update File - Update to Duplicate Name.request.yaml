@@ -1,0 +1,31 @@
+$kind: http-request
+url: "{{baseUrl}}/api/workspaces/{{workspaceId}}/files/{{fileId}}"
+method: PATCH
+body:
+  type: json
+  content: "{\r\n    \"name\": \"hello.ts\"\r\n}"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Duplicate filename returns 409\", function () {\r
+
+      \    pm.response.to.have.status(409);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Returns duplicate filename error\", function () {\r
+
+      \    const json = pm.response.json();\r
+
+      \r
+
+      \    pm.expect(json.error).to.eql(\r
+
+      \        \"A file with this name already exists in this workspace\"\r
+
+      \    );\r
+
+      });"
+    language: text/javascript
+order: 12031

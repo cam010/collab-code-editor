@@ -69,13 +69,19 @@ export async function createFileController(req: Request, res: Response) {
     content
   );
 
-  if (response === undefined) {
+  if (response.status === "workspace_not_found") {
     return res.status(404).json({
       error: "Workspace Not Found",
     });
   }
 
-  return res.status(201).json(response);
+  if (response.status === "duplicate_name") {
+    return res.status(409).json({
+      error: "A file with this name already exists in this workspace",
+    });
+  }
+
+  return res.status(201).json(response.file);
 }
 
 export async function getFileByIdController(req: Request, res: Response) {
@@ -155,15 +161,27 @@ export async function updateFileController(req: Request, res: Response) {
     ...(content !== undefined && { content }),
   };
 
-  const updatedFile = await updateFileService(workspaceId, fileId, updates);
+  const response = await updateFileService(workspaceId, fileId, updates);
 
-  if (updatedFile === undefined) {
+  if (response.status === "workspace_not_found") {
+    return res.status(404).json({
+      error: "Workspace not found",
+    });
+  }
+
+  if (response.status === "file_not_found") {
     return res.status(404).json({
       error: "File not found",
     });
   }
 
-  return res.status(200).json(updatedFile);
+  if (response.status === "duplicate_name") {
+    return res.status(409).json({
+      error: "A file with this name already exists in this workspace",
+    });
+  }
+
+  return res.status(200).json(response.file);
 }
 
 export async function deleteFileController(req: Request, res: Response) {
