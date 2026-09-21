@@ -1,5 +1,6 @@
 $kind: http-request
-url: "{{baseUrl}}/api/workspaces/{{workspaceId}}/files/00000000-0000-4000-8000-000000000000"
+url: "{{baseUrl}}/api/workspaces/{{workspaceId}}/files/00000000-0000-4000-8000-\
+  000000000000"
 method: PATCH
 body:
   type: json
@@ -24,4 +25,4 @@ scripts:
 
       });"
     language: text/javascript
-order: 4503599607026540
+order: 11000

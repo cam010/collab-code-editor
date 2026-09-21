@@ -36,4 +36,4 @@ scripts:
 
       pm.collectionVariables.set(\"otherWorkspaceId\", response.id);"
     language: text/javascript
-order: 2969
+order: 2000

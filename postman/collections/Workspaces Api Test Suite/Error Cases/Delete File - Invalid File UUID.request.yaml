@@ -1,6 +1,6 @@
 $kind: http-request
-url: "{{baseUrl}}/api/workspaces/banana/files"
-method: GET
+url: "{{baseUrl}}/api/workspaces/{{workspaceId}}/files/banana"
+method: DELETE
 scripts:
   - type: afterResponse
     code: "const response = pm.response.json();\r
@@ -15,10 +15,10 @@ scripts:
 
       \r
 
-      pm.test(\"Returns invalid workspace id error\", function () {\r
+      pm.test(\"Returns invalid file id error\", function () {\r
 
-      \    pm.expect(response.error).to.eql(\"Invalid Workspace id\");\r
+      \    pm.expect(response.error).to.eql(\"Invalid file id\");\r
 
       });"
     language: text/javascript
-order: 3000
+order: 13869

@@ -1,6 +1,5 @@
 $kind: http-request
-url: "{{baseUrl}}/api/workspaces/{{workspaceId}}/files/00000000-0000-4000-8000-\
-  000000000000"
+url: "{{baseUrl}}/api/workspaces/{{workspaceId}}/files/{{otherFileId}}"
 method: GET
 scripts:
   - type: afterResponse
@@ -22,4 +21,4 @@ scripts:
 
       });"
     language: text/javascript
-order: 7000
+order: 12000

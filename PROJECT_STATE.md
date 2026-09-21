@@ -17,7 +17,7 @@ A browser-based collaborative code editor/mini-IDE allowing multiple users to ed
 Build a technically substantial CS portfolio project suitable for software engineering internship/placement applications.
 
 **Current status:**  
-Phase 1 complete. Phase 2 backend and persistence foundation is in progress; PostgreSQL + Kysely are connected and both workspace listing and persisted workspace creation are implemented.
+Phase 1 complete. Phase 2 backend and persistence foundation is in progress; PostgreSQL + Kysely are connected, workspace persistence is implemented, and persisted file CRUD (create/list/get/update/delete) is implemented with Postman coverage.
 
 ---
 
@@ -46,7 +46,7 @@ Design and implement the PostgreSQL persistence foundation for workspaces and fi
 - [x] `GET /api/workspaces` migrated from temporary in-memory data to PostgreSQL
 - [x] Persisted workspace data verified through the REST API and across backend restarts
 - [x] `POST /api/workspaces` creates persisted workspaces with application-generated UUIDs
-- [ ] File persistence operations implemented through a file repository
+- [x] File persistence operations implemented through a file repository (create/list/get/update/delete)
 - [ ] Frontend editor connected to the REST persistence API
 
 ---
@@ -176,7 +176,7 @@ Next.js / React frontend
 - [x] `GET /api/workspaces` reads persisted PostgreSQL data
 - [x] Workspace creation API implemented
 - [x] Workspace creation validates non-empty names and returns `201 Created`
-- [ ] File persistence API implemented
+- [x] File persistence API implemented (create/list/get/update/delete)
 
 ---
 
@@ -226,11 +226,14 @@ server/
 │   ├── routes/
 │   │   └── workspaceRoutes.ts
 │   ├── controllers/
-│   │   └── workspaceController.ts
+│   │   ├── workspaceController.ts
+│   │   └── fileController.ts
 │   ├── services/
-│   │   └── workspaceService.ts
+│   │   ├── workspaceService.ts
+│   │   └── fileService.ts
 │   ├── repositories/
-│   │   └── workspaceRepository.ts
+│   │   ├── workspaceRepository.ts
+│   │   └── fileRepository.ts
 │   └── db/
 │       ├── database.ts
 │       ├── types.ts
@@ -242,7 +245,7 @@ server/
 └── .gitignore
 ```
 
-The frontend remains the completed Phase 1 editor. The backend exposes a health endpoint plus PostgreSQL-backed `GET /api/workspaces` and `POST /api/workspaces` endpoints using route → controller → service → repository separation. Workspace creation validates non-empty names, generates UUIDs in the application, persists through Kysely, and returns `201 Created`. Kysely is configured and the initial database migration is applied.
+The frontend remains the completed Phase 1 editor. The backend exposes a health endpoint plus PostgreSQL-backed workspace and file REST endpoints using route → controller → service → repository separation. Workspace creation validates non-empty names and generates application UUIDs. File APIs support listing files in a workspace, creating files with database defaults for omitted language/content, retrieving a file by workspace/file ID, partially updating name/language/content, and deleting a file scoped to its workspace. Kysely is configured and the initial database migration is applied.
 
 Target structure:
 
@@ -391,7 +394,7 @@ Execution should eventually use an isolated sandbox/container with:
 
 ## Testing Goals
 
-Testing has not started.
+A Postman development/regression collection is in use for the implemented REST API. Formal automated unit/integration tests have not started.
 
 Eventually include:
 
@@ -561,30 +564,46 @@ Do not present these as settled decisions.
 - Verified invalid blank workspace names return `400` and are not persisted.
 - Workspace names remain non-unique; workspace identity is based on UUID.
 
+### Workspace/file REST persistence and Postman coverage — 2026-09-21
+
+- Added `GET /api/workspaces/:workspaceId` with UUID validation, `404` handling, and persisted lookup.
+- Added `fileRepository.ts`, `fileService.ts`, and `fileController.ts` while preserving route → controller → service → repository separation.
+- Updated Kysely `FileTable` defaults so database-generated/defaulted fields can be omitted on inserts.
+- Added `GET /api/workspaces/:workspaceId/files` to load all persisted files for a workspace.
+- Added `POST /api/workspaces/:workspaceId/files`; file UUIDs are generated in the service with `crypto.randomUUID()`.
+- File creation requires a non-empty name; `language` and `content` are optional and use PostgreSQL defaults (`text` and empty string) when omitted.
+- Added `GET /api/workspaces/:workspaceId/files/:fileId`; lookup is scoped by both workspace ID and file ID so files cannot be retrieved through a different workspace.
+- Added `PATCH /api/workspaces/:workspaceId/files/:fileId` for partial updates to `name`, `language`, and/or `content`.
+- PATCH rejects an empty update body, validates supplied field types, permits empty-string content, and returns `404` when the workspace/file pair does not match.
+- Added UUID validation at the HTTP boundary so malformed UUIDs return `400` instead of PostgreSQL UUID syntax errors.
+- Hardened request-body access with optional chaining so missing JSON bodies produce controlled validation errors rather than controller exceptions.
+- Created a Postman collection using `baseUrl`, `workspaceId`, and `fileId` variables for repeatable API setup and regression checks.
+- Postman coverage includes workspace creation/retrieval, file creation with defaults and explicit language/content, file listing/retrieval, partial file updates, persistence checks, and key `400`/`404` error cases.
+- Verified the implemented file create/list/get/update flows through Postman.
+- Added `DELETE /api/workspaces/:workspaceId/files/:fileId`; deletion is scoped by both workspace ID and file ID and returns `404` when no matching file exists.
+- Successful deletion returns `204 No Content`; the repository uses `DELETE ... RETURNING` to distinguish a deleted row from a missing file without a separate existence query.
+- Added Postman coverage for successful deletion, retrieval-after-delete (`404`), malformed workspace/file UUIDs, and deletion of a nonexistent file.
+
 ---
 
 ## Current Task
 
-**Implement persisted file CRUD / workspace-file loading through a file repository.**
+**Verify remaining file persistence/constraint behaviour, then connect the frontend editor to the REST persistence API.**
 
 Suggested immediate sequence:
 
-1. Review the existing `FileTable` Kysely types against the implemented database defaults.
-2. Add a file repository while keeping Kysely/database-specific access behind the repository boundary.
-3. Implement loading files for a workspace.
-4. Implement persisted file creation with application-generated UUIDs.
-5. Add file update operations needed for name, language and content persistence.
-6. Add file deletion.
-7. Validate file inputs at the HTTP/application boundary and handle the existing per-workspace filename uniqueness constraint appropriately.
-8. Verify file data survives backend restarts before connecting the frontend editor.
+1. Run the full Postman collection including the new deletion cases.
+2. Verify per-workspace filename uniqueness is handled cleanly by the API rather than surfacing a raw database error.
+3. Verify complete file CRUD data/behaviour across backend restarts.
+4. Connect the frontend editor to the REST persistence API.
 
 ---
 
 ## Next Tasks
 
-1. Implement persisted file CRUD / workspace-file loading through a file repository.
-2. Add request validation and appropriate API error handling for file operations.
-3. Verify file persistence, per-workspace filename uniqueness and workspace/file relationships through the REST API.
+1. Run the full Postman collection including file deletion coverage.
+2. Handle the existing per-workspace filename uniqueness constraint with appropriate API errors.
+3. Verify complete file CRUD persistence and behaviour across backend restarts.
 4. Connect the frontend editor to the REST persistence API.
 5. Add authentication and permissions.
 6. Add WebSocket infrastructure.
@@ -615,6 +634,12 @@ None currently known.
 - Backend framework is now Express with TypeScript.
 - Kysely is configured and connected to the local PostgreSQL database.
 - Keep database-specific calls behind repositories rather than scattering Kysely calls through controllers/services.
+- File repository/service/controller layers are now implemented for list, create, get-by-ID, partial update, and delete operations.
+- `GET /api/workspaces/:workspaceId/files/:fileId` scopes lookup by both workspace and file IDs; a mismatched pair returns `404`.
+- `PATCH /api/workspaces/:workspaceId/files/:fileId` performs one partial database update using only supplied fields; empty-string file content is valid.
+- `DELETE /api/workspaces/:workspaceId/files/:fileId` deletes only a file belonging to the specified workspace, returns `404` when no matching row exists, and returns `204 No Content` on success.
+- Malformed workspace/file UUIDs are rejected at the HTTP boundary with `400` responses.
+- Postman collection variables (`baseUrl`, `workspaceId`, `fileId`) are used to chain repeatable API checks.
 - `GET /api/workspaces` now reads persisted workspace data through `workspaceRepository.ts`.
 - `POST /api/workspaces` creates persisted workspaces through the existing route → controller → service → repository flow.
 - Workspace creation validates that `name` is a non-empty string after trimming and returns `400` for invalid blank names.

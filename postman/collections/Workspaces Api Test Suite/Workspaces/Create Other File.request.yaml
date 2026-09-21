@@ -1,10 +1,9 @@
 $kind: http-request
-name: Create File no Language/Content
 url: "{{baseUrl}}/api/workspaces/{{workspaceId}}/files"
 method: POST
 body:
   type: json
-  content: "{\r\n    \"name\": \"index.ts\"\r\n}"
+  content: "{\r\n    \"name\": \"index2.ts\"\r\n}"
 scripts:
   - type: afterResponse
     code: "const response = pm.response.json();\r
@@ -29,7 +28,7 @@ scripts:
 
       \    );\r
 
-      \    pm.expect(response.name).to.eql(\"index.ts\");\r
+      \    pm.expect(response.name).to.eql(\"index2.ts\");\r
 
       });\r
 
@@ -45,6 +44,6 @@ scripts:
 
       \r
 
-      pm.collectionVariables.set(\"fileId\", response.id);"
+      pm.collectionVariables.set(\"otherFileId\", response.id);"
     language: text/javascript
-order: 4000
+order: 3114

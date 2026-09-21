@@ -61,3 +61,15 @@ export async function updateFileRepository(
     .returning(["id", "workspace_id", "name", "language", "content"])
     .executeTakeFirst();
 }
+
+export async function deleteFileRepository(
+  workspaceId: string,
+  fileId: string
+) {
+  return db
+    .deleteFrom("files")
+    .where("workspace_id", "=", workspaceId)
+    .where("id", "=", fileId)
+    .returning("id")
+    .executeTakeFirst();
+}

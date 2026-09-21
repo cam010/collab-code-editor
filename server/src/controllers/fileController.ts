@@ -1,5 +1,6 @@
 import {
   createFileService,
+  deleteFileService,
   getFileByFileIdService,
   getFilesByWorkspaceIdService,
   updateFileService,
@@ -163,4 +164,30 @@ export async function updateFileController(req: Request, res: Response) {
   }
 
   return res.status(200).json(updatedFile);
+}
+
+export async function deleteFileController(req: Request, res: Response) {
+  const { workspaceId, fileId } = req.params;
+
+  if (typeof workspaceId !== "string" || !UUID_REGEX.test(workspaceId)) {
+    return res.status(400).json({
+      error: "Invalid workspace id",
+    });
+  }
+
+  if (typeof fileId !== "string" || !UUID_REGEX.test(fileId)) {
+    return res.status(400).json({
+      error: "Invalid file id",
+    });
+  }
+
+  const deletedFile = await deleteFileService(workspaceId, fileId);
+
+  if (deletedFile === undefined) {
+    return res.status(404).json({
+      error: "File not found",
+    });
+  }
+
+  return res.status(204).send();
 }

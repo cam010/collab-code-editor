@@ -1,5 +1,6 @@
 import {
   createFileRepository,
+  deleteFileRepository,
   getFileByFileIdRepository,
   getFilesByWorkspaceIdRepository,
   updateFileRepository,
@@ -52,4 +53,8 @@ export async function updateFileService(
   }
 ) {
   return updateFileRepository(workspaceId, fileId, updates);
+}
+
+export async function deleteFileService(workspaceId: string, fileId: string) {
+    return deleteFileRepository(workspaceId, fileId)
 }

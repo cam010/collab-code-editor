@@ -4,3 +4,4 @@ variables:
   workspaceId: ""
   fileId: ""
   otherWorkspaceId: ""
+  otherFileId: ""
