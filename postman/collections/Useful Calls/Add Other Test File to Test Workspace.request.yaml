@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/api/workspaces/{{workspaceId}}/files"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"name\": \"hello.ts\",\r
+
+    \    \"language\": \"typescript\",\r
+
+    \    \"content\": \"console.log('Hello CollabCode');\"\r
+
+    }"
+order: 2407

@@ -10,8 +10,8 @@ import { useState } from "react";
 interface FileExplorerProps {
     fileList: FileItem[]
     setSelectedFileId: (id: string) => void
-    selectedFileId: string
-    addFile: (name: string) => void
+    selectedFileId: string | null
+    addFile: (name: string) => Promise<void>
 }
 
 export default function FileExplorer({ fileList, setSelectedFileId, selectedFileId, addFile }: FileExplorerProps) {

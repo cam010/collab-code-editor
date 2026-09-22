@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/api/workspaces/{{workspaceId}}/files"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"name\": \"hello2.js\",\r
+
+    \    \"language\": \"javascript\",\r
+
+    \    \"content\": \"console.log('Hello CollabCode');\"\r
+
+    }"
+order: 3000

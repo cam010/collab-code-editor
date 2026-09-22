@@ -3,27 +3,72 @@
 import Editor from './Components/CodeEditor/codeEditor';
 import Navbar from './Components/Navbar/navbar';
 import Menubar from './Components/Menubar/menubar';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FileItem, Language } from './types/codeEditor';
 import FileExplorer from './Components/FileExplorer/fileExplorer';
+import { getWorkspaceFiles, createFile, updateFile } from './lib/fileApi';
+
+// DEV TESTING ONLY
+const workspaceId = process.env.NEXT_PUBLIC_DEV_WORKSPACE_ID
 
 
 export default function Page() {
 
-  const [files, setFiles] = useState<FileItem[]>([
-    {
-      id: '1',
-      name: 'main.py',
-      language: 'python',
-      content: '# Start coding...',
-    },
-    {
-      id: '2',
-      name: 'main.js',
-      language: 'javascript',
-      content: '// Start coding...',
-    },
-  ]);
+  const [files, setFiles] = useState<FileItem[]>([])
+  const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
+
+  const selectedFile = files.find(
+    (file) => file.id === selectedFileId
+  )
+
+  // Load workspace files from server on refresh
+  useEffect(() => {
+    const loadFiles = async () => {
+      if (!workspaceId) {
+        console.error('Missing workspace ID');
+        return;
+      }
+      try {
+        const persistedFiles = await getWorkspaceFiles(workspaceId);
+
+        setFiles(persistedFiles);
+
+        if (persistedFiles.length > 0) {
+          setSelectedFileId(persistedFiles[0].id);
+        }
+      } catch (error) {
+        console.error('Failed to load files:', error);
+      }
+    };
+
+    loadFiles();
+
+  }, [])
+
+
+  // Send content update to server 750ms after selected file change / file content change
+  useEffect(() => {
+    if (!workspaceId || !selectedFileId || !selectedFile) {
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        await updateFile(
+          workspaceId,
+          selectedFileId,
+          undefined,
+          selectedFile.content
+        );
+      } catch (error) {
+        console.error('Failed to save file content:', error);
+      }
+    }, 750);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [selectedFile?.content, selectedFileId]);
 
   const updateFileContent = (content: string) => {
     setFiles((currentFiles) =>
@@ -35,23 +80,22 @@ export default function Page() {
     );
   };
 
-  const addFile = (name: string) => {
-    const newFile: FileItem = {
-      id: Date.now().toString(),
-      name,
-      language: "text",
-      content: ``,
-    };
-    setFiles((prevFiles) => [...prevFiles, newFile]);
-    setSelectedFileId(newFile.id);
+  const addFile = async (name: string) => {
+    if (!workspaceId) {
+      console.error('Missing workspace ID');
+      return;
+    }
+    try {
+      const newFile = await createFile(workspaceId, name);
+
+      setFiles((prevFiles) => [...prevFiles, newFile]);
+      setSelectedFileId(newFile.id);
+    } catch (error) {
+      console.error('Failed to create file:', error);
+    }
   };
 
-  const [selectedFileId, setSelectedFileId] = useState('1');
-  const selectedFile = files.find(
-    (file) => file.id === selectedFileId
-  )
-
-  const setLanguage = (language: Language) => {
+  const setLanguage = async (language: Language) => {
     setFiles((currentFiles) =>
       currentFiles.map((file) =>
         file.id === selectedFileId
@@ -59,20 +103,48 @@ export default function Page() {
           : file
       )
     );
+    if (!workspaceId) {
+      console.error('Missing workspace ID');
+      return;
+    }
+    if (!selectedFileId) {
+      console.error('Missing file ID');
+      return;
+    }
+    try {
+      await updateFile(workspaceId, selectedFileId, language = language)
+    } catch (error) {
+      console.error('Failed to update language:', error);
+    }
+
   }
 
 
   return (
     <>
       <Menubar />
-      <Navbar
-        language={selectedFile!.language}
-        setLanguage={setLanguage} />
+
+      {selectedFile && (
+        <Navbar
+          language={selectedFile.language}
+          setLanguage={setLanguage}
+        />
+      )}
+
       <div style={{ display: 'flex' }}>
-        <FileExplorer fileList={files} setSelectedFileId={setSelectedFileId} selectedFileId={selectedFileId} addFile={addFile} />
-        <Editor
-          file={selectedFile!}
-          onCodeChange={updateFileContent} />
+        <FileExplorer
+          fileList={files}
+          setSelectedFileId={setSelectedFileId}
+          selectedFileId={selectedFileId}
+          addFile={addFile}
+        />
+
+        {selectedFile && (
+          <Editor
+            file={selectedFile}
+            onCodeChange={updateFileContent}
+          />
+        )}
       </div>
     </>
   );

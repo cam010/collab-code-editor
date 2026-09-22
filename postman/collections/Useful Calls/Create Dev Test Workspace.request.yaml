@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/api/workspaces"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"name\": \"Dev Test Workspace\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: pm.collectionVariables.set("workspaceId", response.id);
+    language: text/javascript
+order: 1000

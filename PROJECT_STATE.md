@@ -17,7 +17,7 @@ A browser-based collaborative code editor/mini-IDE allowing multiple users to ed
 Build a technically substantial CS portfolio project suitable for software engineering internship/placement applications.
 
 **Current status:**  
-Phase 1 complete. Phase 2 backend and persistence foundation is in progress; the backend persistence work is complete and verified, including clean duplicate-filename handling and CRUD persistence across backend restarts. The remaining Phase 2 milestone is connecting the frontend editor to the REST persistence API.
+Phase 1 complete. Phase 2 backend and persistence foundation is in progress. Backend persistence is complete and verified. Frontend REST integration is partially complete: persisted files load from the backend, frontend file creation persists through POST, language updates persist through PATCH, and editor content autosaves through debounced PATCH requests. Frontend delete/rename integration and final end-to-end verification remain.
 
 ---
 
@@ -51,6 +51,13 @@ Design and implement the PostgreSQL persistence foundation for workspaces and fi
 - [x] Per-workspace duplicate filenames return controlled `409 Conflict` responses for create and rename collisions
 - [x] Complete file CRUD persistence verified across backend restarts
 - [ ] Frontend editor connected to the REST persistence API
+  - [x] Persisted files loaded with GET
+  - [x] Frontend file creation connected to POST
+  - [x] Language updates connected to PATCH
+  - [x] Debounced editor-content autosave connected to PATCH
+  - [ ] Frontend rename connected to PATCH
+  - [ ] Frontend deletion connected to DELETE
+  - [ ] Final page/backend restart regression verification
 
 ---
 
@@ -182,6 +189,12 @@ Next.js / React frontend
 - [x] File persistence API implemented (create/list/get/update/delete)
 - [x] Duplicate filename constraint errors translated cleanly through repository/service/controller layers to `409 Conflict`
 - [x] File CRUD regression and restart-persistence verification completed
+- [x] Frontend REST API client introduced in `apps/web/app/lib/fileApi.ts`
+- [x] Frontend loads persisted workspace files into `page.tsx` state
+- [x] Frontend file creation persists through `POST /api/workspaces/:workspaceId/files`
+- [x] Frontend language changes persist through file PATCH
+- [x] Monaco content changes remain immediate in React state and persist through debounced PATCH autosave
+- [x] Development CORS configured so the Next.js frontend can call the Express API
 
 ---
 
@@ -191,7 +204,7 @@ Next.js / React frontend
 
 - [x] Monaco code editor
 - [x] File creation/editing
-- [ ] File persistence
+- [ ] File persistence (partially complete in frontend; GET/POST/PATCH integrated, delete/rename UI pending)
 - [ ] User authentication
 - [ ] Workspaces
 - [ ] Workspace members/permissions
@@ -222,7 +235,27 @@ Current known structure:
 
 ```text
 apps/web/
-└── [existing Next.js frontend]
+├── app/
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── page.tsx
+│   ├── Components/
+│   │   ├── CodeEditor/
+│   │   │   └── codeEditor.tsx
+│   │   ├── FileExplorer/
+│   │   │   ├── addFileFilenameAsker.tsx
+│   │   │   ├── fileExplorer.tsx
+│   │   │   └── fileItem.tsx
+│   │   ├── Menubar/
+│   │   │   └── menubar.tsx
+│   │   └── Navbar/
+│   │       └── navbar.tsx
+│   ├── lib/
+│   │   └── fileApi.ts
+│   └── types/
+│       └── codeEditor.ts
+└── [Next.js generated/config files]
 
 server/
 ├── src/
@@ -250,7 +283,7 @@ server/
 └── .gitignore
 ```
 
-The frontend remains the completed Phase 1 editor. The backend exposes a health endpoint plus PostgreSQL-backed workspace and file REST endpoints using route → controller → service → repository separation. Workspace creation validates non-empty names and generates application UUIDs. File APIs support listing files in a workspace, creating files with database defaults for omitted language/content, retrieving a file by workspace/file ID, partially updating name/language/content, and deleting a file scoped to its workspace. Kysely is configured and the initial database migration is applied.
+The frontend now retains `files` and `selectedFileId` state in `page.tsx`, uses `app/lib/fileApi.ts` for REST calls, loads persisted files for a temporary development workspace, persists file creation, persists language changes, and autosaves editor content with a debounce. The backend exposes a health endpoint plus PostgreSQL-backed workspace and file REST endpoints using route → controller → service → repository separation. Workspace creation validates non-empty names and generates application UUIDs. File APIs support listing files in a workspace, creating files with database defaults for omitted language/content, retrieving a file by workspace/file ID, partially updating name/language/content, and deleting a file scoped to its workspace. Kysely is configured and the initial database migration is applied.
 
 Target structure:
 
@@ -601,50 +634,84 @@ Do not present these as settled decisions.
 - Verified complete file CRUD data and behaviour persist correctly across backend restarts.
 - Backend persistence/constraint verification is now complete; frontend REST integration is the next task.
 
+### Frontend REST persistence integration — 2026-09-22
+
+- Recorded the actual frontend structure under `apps/web/app`, including CodeEditor, FileExplorer, Menubar, Navbar, types, and the new `lib/fileApi.ts` API client.
+- Added temporary development workspace configuration because frontend workspace selection is not implemented yet.
+- Added `NEXT_PUBLIC_API_URL` and a temporary `NEXT_PUBLIC_DEV_WORKSPACE_ID` approach for client-side API calls.
+- Configured backend CORS for the local Next.js frontend.
+- Replaced hardcoded initial frontend files with persisted file loading from `GET /api/workspaces/:workspaceId/files`.
+- Updated frontend selection handling so the editor can start with no selected file while persisted data loads.
+- Connected existing file creation UI to `POST /api/workspaces/:workspaceId/files`; backend-generated UUIDs are now used in frontend state.
+- Verified created files persist in the backend and reload correctly.
+- Connected language selection changes to `PATCH /api/workspaces/:workspaceId/files/:fileId` and verified persistence.
+- Added debounced editor-content PATCH autosave so content is not persisted on every Monaco keystroke; verified edited content survives refresh.
+- Frontend delete and rename UI are not implemented yet. A right-click file context menu containing Rename/Delete is the current idea, with possible future actions such as Duplicate, but this work is tabled for now.
+- An intermittent Next.js/Turbopack development chunk-loading error was observed; core functionality remains working and investigation is deferred.
+
 ---
 
 ## Current Task
 
-**Connect the frontend editor to the REST persistence API.**
+**Finish the remaining frontend REST persistence integration.**
 
-Backend persistence verification is complete. The next session should begin with the existing `page.tsx` frontend state and integrate persisted files incrementally.
+Backend persistence verification is complete. Frontend GET/POST/PATCH integration is working. The next session should continue from the existing `page.tsx` state and API client, with delete/rename UI and final regression verification still pending.
 
 Suggested immediate sequence:
 
-1. Load persisted files for a workspace with `GET /api/workspaces/:workspaceId/files` and populate the existing `files` state.
-2. Connect frontend file creation to `POST /api/workspaces/:workspaceId/files`.
-3. Connect file metadata updates/renames to `PATCH /api/workspaces/:workspaceId/files/:fileId`.
-4. Add sensible debounced/autosave persistence for editor content rather than PATCHing on every Monaco keystroke.
-5. Connect file deletion to `DELETE /api/workspaces/:workspaceId/files/:fileId`.
-6. Verify the editor remains correct across page/backend restarts before moving to authentication.
+1. Add frontend file rename interaction and persist it with `PATCH /api/workspaces/:workspaceId/files/:fileId`.
+2. Add frontend file deletion interaction and connect it to `DELETE /api/workspaces/:workspaceId/files/:fileId`.
+3. A right-click file context menu is the current UI idea for rename/delete; implementation is intentionally tabled for now.
+4. Improve frontend handling for duplicate filename `409 Conflict` responses.
+5. Verify end-to-end frontend persistence across page refreshes and backend restarts.
+6. Replace the temporary development workspace ID approach when real frontend workspace handling is introduced.
+7. Move to authentication and permissions after the persistence milestone is complete.
 
 ---
 
 ## Next Tasks
 
-1. Connect the frontend editor to the REST persistence API.
-2. Verify end-to-end frontend file persistence across page/backend restarts.
-3. Add authentication and permissions.
-4. Add WebSocket infrastructure.
-5. Implement collaboration with Yjs.
-6. Add collaboration/reconnection testing as those features are introduced.
+1. Add frontend rename/delete interactions and finish REST persistence integration.
+2. Add friendly frontend handling for duplicate filename `409 Conflict` responses.
+3. Verify end-to-end frontend file persistence across page/backend restarts.
+4. Add real frontend workspace handling; current integration uses a temporary development workspace ID.
+5. Add authentication and permissions.
+6. Add WebSocket infrastructure.
+7. Implement collaboration with Yjs.
+8. Add collaboration/reconnection testing as those features are introduced.
 
 ---
 
 ## Known Bugs
 
-None currently known.
+- Intermittent Next.js/Turbopack development chunk-loading error has been observed; it is currently being ignored because core frontend functionality continues to work. Root cause has not been established.
 
 ### Implementation Notes
 
 - Do not mutate `file.content` directly. Update the `files` state with `setFiles`.
 - `files` in `page.tsx` remains the current source of truth for the single-user editor.
+- Frontend REST calls are separated into `apps/web/app/lib/fileApi.ts`; File Explorer remains a UI component rather than owning persistence.
+- Frontend workspace selection is not implemented yet. A temporary `NEXT_PUBLIC_DEV_WORKSPACE_ID` is used for development API calls.
+- The frontend uses `NEXT_PUBLIC_API_URL` for the backend base URL.
+- CORS is configured in development so the browser frontend can call the Express backend; production should restrict allowed origins to deployed frontend origin(s).
+- Initial persisted file loading uses `GET /api/workspaces/:workspaceId/files` and populates the existing `files` state.
+- Frontend file creation uses the persisted object returned by the backend instead of locally generated `Date.now()` IDs.
+- Language updates are persisted through PATCH.
+- Editor content updates remain immediate locally and are persisted with a debounce rather than a PATCH on every Monaco keystroke.
 - Each file stores its own language and content.
 - The Navbar and Monaco Editor derive their language from the currently selected file.
 - File creation currently defaults new files to the `text` language.
 - Duplicate filename handling is implemented: the repository recognises PostgreSQL unique violation `23505` for `files_workspace_id_name_unique`, translates it to an application-level duplicate filename error, and create/rename collisions return `409 Conflict`.
 - Do not introduce WebSockets/Yjs/global state management yet; those belong to later phases.
 - `files` in `page.tsx` remains the current source of truth for the single-user editor.
+- Frontend REST calls are separated into `apps/web/app/lib/fileApi.ts`; File Explorer remains a UI component rather than owning persistence.
+- Frontend workspace selection is not implemented yet. A temporary `NEXT_PUBLIC_DEV_WORKSPACE_ID` is used for development API calls.
+- The frontend uses `NEXT_PUBLIC_API_URL` for the backend base URL.
+- CORS is configured in development so the browser frontend can call the Express backend; production should restrict allowed origins to deployed frontend origin(s).
+- Initial persisted file loading uses `GET /api/workspaces/:workspaceId/files` and populates the existing `files` state.
+- Frontend file creation uses the persisted object returned by the backend instead of locally generated `Date.now()` IDs.
+- Language updates are persisted through PATCH.
+- Editor content updates remain immediate locally and are persisted with a debounce rather than a PATCH on every Monaco keystroke.
 - Each file stores its own language and content.
 - The Navbar and Monaco Editor derive their language from the currently selected file.
 - File creation currently defaults new files to the `text` language.
